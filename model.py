@@ -80,7 +80,9 @@ class BasicGPT(nn.Module):
         # Token embedding layer
         self.embedding = nn.Embedding(cf.vocab_size, cf.d_model)
         # Stack multiple transformer blocks
-        self.block = TransformerBlock()
+        self.block = nn.ModuleList([
+            TransformerBlock() for _ in range(4)  # 4 blocks
+        ])
         # Final layer norm
         self.layernorm = nn.LayerNorm(cf.d_model)
         # Output projection to vocabulary
@@ -91,7 +93,8 @@ class BasicGPT(nn.Module):
         x = self.embedding(input_ids)
     
         # Pass through each transformer block
-        x = self.block(x)
+        for block in self.blocks:
+            x = block(x)
         
         # Apply final layer norm
         x = self.layernorm(x)

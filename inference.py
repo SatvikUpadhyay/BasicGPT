@@ -22,7 +22,8 @@ def generate(prompt, max_tokens=50, temperature=0.7):
         
         next_logits = logits[0, -1, :] / temperature
         probs = torch.softmax(next_logits, dim=-1)
-        next_token = torch.multinomial(probs, 1).unsqueeze(0).unsqueeze(0)
+        next_token = torch.multinomial(probs, 1)  # This is 1D
+        next_token = next_token.unsqueeze(0)  # Make it 2D: (1, 1)
         input_ids = torch.cat([input_ids, next_token], dim=1)
     
     generated_tokens = input_ids[0].cpu().tolist()
