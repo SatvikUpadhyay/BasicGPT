@@ -6,7 +6,7 @@ import config as cf
 
 # Load model
 model = BasicGPT().to(cf.device)
-model.load_state_dict(torch.load("model_epoch_3.pt", map_location=cf.device))
+model.load_state_dict(torch.load("model_weights.pt", map_location=cf.device))
 model.eval()
 
 # Load tokenizer

@@ -12,7 +12,7 @@ print(f"Using device: {device}")
 class TransformerBlock(nn.Module):
     def __init__(self) -> None:
         super().__init__()
-        self.attention = Attention(d_model=cf.d_model)
+        self.attention = Attention(d_model=cf.d_model, num_heads=cf.num_heads)
         self.mlp = MLP(d_model=cf.d_model, d_ff=cf.d_ff)
         self.layerNorm1 = nn.LayerNorm(cf.d_model)
         self.layerNorm2 = nn.LayerNorm(cf.d_model)
@@ -33,18 +33,32 @@ class TransformerBlock(nn.Module):
         return x
 
 class Attention(nn.Module):
-    def __init__(self, d_model):
+    def __init__(self, d_model, num_heads):
         super().__init__()
+        assert d_model % num_heads == 0
+        
+        self.d_model = d_model
+        self.num_heads = num_heads
+        self.head_dim = d_model // num_heads
+        
         self.q = nn.Linear(d_model, d_model)
         self.k = nn.Linear(d_model, d_model)
         self.v = nn.Linear(d_model, d_model)
-
+        self.out = nn.Linear(d_model, d_model)
+    
     def forward(self, x):
-        Q = self.q(x)
-        K = self.k(x)
-        V = self.v(x)
-        x = F.scaled_dot_product_attention(Q, K, V)
-        return x
+        batch_size, seq_len, d_model = x.shape
+        
+        Q = self.q(x).view(batch_size, seq_len, self.num_heads, self.head_dim).transpose(1, 2)
+        K = self.k(x).view(batch_size, seq_len, self.num_heads, self.head_dim).transpose(1, 2)
+        V = self.v(x).view(batch_size, seq_len, self.num_heads, self.head_dim).transpose(1, 2)
+        
+        attn_out = F.scaled_dot_product_attention(Q, K, V)
+        
+        attn_out = attn_out.transpose(1, 2).contiguous()
+        attn_out = attn_out.view(batch_size, seq_len, d_model)
+        
+        return self.out(attn_out)
 
 
 class MLP(nn.Module):

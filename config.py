@@ -4,6 +4,7 @@ import tiktoken
 
 d_model = 1024
 d_ff = d_model * 4
+num_heads = 4
 
 enc = tiktoken.get_encoding("cl100k_base")
 vocab_size = enc.n_vocab
