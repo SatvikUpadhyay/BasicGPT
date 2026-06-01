@@ -80,7 +80,7 @@ class BasicGPT(nn.Module):
         # Token embedding layer
         self.embedding = nn.Embedding(cf.vocab_size, cf.d_model)
         # Stack multiple transformer blocks
-        self.block = nn.ModuleList([
+        self.blocks = nn.ModuleList([
             TransformerBlock() for _ in range(4)  # 4 blocks
         ])
         # Final layer norm
