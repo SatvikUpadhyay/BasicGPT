@@ -2,8 +2,8 @@
 import torch
 import tiktoken
 
-d_model = 1024
-d_ff = d_model * 8
+d_model = 512
+d_ff = d_model * 4
 num_heads = 8
 num_layers = 4
 
