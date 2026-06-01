@@ -1,9 +1,16 @@
+# config.py
+import torch
+import tiktoken
+
 d_model = 512
-d_ff = d_model * 4 # From attention is all you need (4x the model dimension)
-vocab_size=10000
+d_ff = d_model * 4
+
+enc = tiktoken.get_encoding("cl100k_base")
+vocab_size = enc.n_vocab
 
 max_seq_length = 512
-batch_size = 32
+batch_size = 8
 learning_rate = 1e-3
 num_epochs = 3
-device = "cpu"
+device = "cuda" if torch.cuda.is_available() else "cpu"
+print(f"Using device: {device}")

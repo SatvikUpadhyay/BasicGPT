@@ -2,16 +2,16 @@ import torch
 import torch.optim as optim
 from torch.utils.data import DataLoader
 from dataset import TextDataset
-from tokenizer import SimpleTokenizer
 from model import BasicGPT
 import config as cf
 import torch.nn.functional as F
 from dataset import TextDataset, download_tinystories
-
-# Load tokenizer
-tokenizer = SimpleTokenizer(vocab_size=cf.vocab_size)
+import tiktoken
 
 download_tinystories()
+
+# Load tokenizer
+tokenizer = tiktoken.get_encoding("cl100k_base")
 
 # Load text and create dataset
 text = open("data.txt").read()
@@ -40,3 +40,6 @@ for epoch in range(cf.num_epochs):
         
         if (batch_idx + 1) % 10 == 0:
             print(f"Epoch {epoch+1}, Batch {batch_idx+1}, Loss: {loss.item():.4f}")
+
+    torch.save(model.state_dict(), "model_weights.pt")
+    print("Model saved to model_weights.pt")
