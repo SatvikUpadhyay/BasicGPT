@@ -1,12 +1,9 @@
-from turtle import forward
-from mpmath import residual
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import config as cf
-import tokenizer as tf
 
-device = "cuda" if torch.cuda.is_available else "cpu"
+device = "cuda" if torch.cuda.is_available() else "cpu"
 print(f"Using device: {device}")
 
 class TransformerBlock(nn.Module):
@@ -48,12 +45,15 @@ class Attention(nn.Module):
     
     def forward(self, x):
         batch_size, seq_len, d_model = x.shape
+
+        # Add a causal mask to strictly prevent looking ahead.
+        causal_mask = torch.tril(torch.ones(seq_len, seq_len, device=x.device))
         
         Q = self.q(x).view(batch_size, seq_len, self.num_heads, self.head_dim).transpose(1, 2)
         K = self.k(x).view(batch_size, seq_len, self.num_heads, self.head_dim).transpose(1, 2)
         V = self.v(x).view(batch_size, seq_len, self.num_heads, self.head_dim).transpose(1, 2)
         
-        attn_out = F.scaled_dot_product_attention(Q, K, V)
+        attn_out = F.scaled_dot_product_attention(Q, K, V, attn_mask=causal_mask)
         
         attn_out = attn_out.transpose(1, 2).contiguous()
         attn_out = attn_out.view(batch_size, seq_len, d_model)
@@ -79,9 +79,13 @@ class BasicGPT(nn.Module):
         super().__init__()
         # Token embedding layer
         self.embedding = nn.Embedding(cf.vocab_size, cf.d_model)
+
+        # Positional embeddings
+        self.pos_embedding = nn.Embedding(cf.max_seq_length, cf.d_model)
+
         # Stack multiple transformer blocks
         self.blocks = nn.ModuleList([
-            TransformerBlock() for _ in range(4)  # 4 blocks
+            TransformerBlock() for _ in range(cf.num_layers)  # 4 blocks
         ])
         # Final layer norm
         self.layernorm = nn.LayerNorm(cf.d_model)
@@ -91,6 +95,10 @@ class BasicGPT(nn.Module):
     def forward(self, input_ids):
         # Embed tokens
         x = self.embedding(input_ids)
+
+        # Add positional embeddings
+        pos = torch.arange(input_ids.shape[1], device=input_ids.device)
+        x = x + self.pos_embedding(pos)
     
         # Pass through each transformer block
         for block in self.blocks:

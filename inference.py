@@ -12,7 +12,8 @@ model.eval()
 # Load tokenizer
 tokenizer = tiktoken.get_encoding("cl100k_base")
 
-def generate(prompt, max_tokens=50, temperature=0.7):
+def generate(prompt, max_tokens=100, temperature=0.7):
+    """Generate text from a prompt"""
     tokens = tokenizer.encode(prompt)
     input_ids = torch.tensor([tokens], dtype=torch.long).to(cf.device)
     
@@ -22,18 +23,20 @@ def generate(prompt, max_tokens=50, temperature=0.7):
         
         next_logits = logits[0, -1, :] / temperature
         probs = torch.softmax(next_logits, dim=-1)
-        next_token = torch.multinomial(probs, 1)  # This is 1D
-        next_token = next_token.unsqueeze(0)  # Make it 2D: (1, 1)
+        next_token = torch.multinomial(probs, 1).unsqueeze(0)
         input_ids = torch.cat([input_ids, next_token], dim=1)
     
     generated_tokens = input_ids[0].cpu().tolist()
     text = tokenizer.decode(generated_tokens)
     return text
 
+# Q&A loop
 if __name__ == "__main__":
+    print("Model loaded and ready!")
     while True:
         prompt = input("You: ")
         if prompt.lower() == "quit":
+            print("Goodbye!")
             break
         response = generate(prompt)
         print(f"Model: {response}\n")
